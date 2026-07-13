@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz de Matemáticas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2430;
+    --ink-soft:#26313F;
+    --paper:#F7F4EC;
+    --paper-line:#E4DFD0;
+    --gold:#C9A15A;
+    --gold-soft:#E4C88A;
+    --coral:#C1543F;
+    --green:#4C7A63;
+    --muted:#8A93A3;
+    --text:#232A33;
+
+    --font-display:'Fraunces', Georgia, serif;
+    --font-body:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono:'IBM Plex Mono', 'Courier New', monospace;
+
+    --radius:18px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    min-height:100vh;
+    background:var(--ink);
+    font-family:var(--font-body);
+    color:var(--text);
+  }
+
+  body{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 18px;
+    position:relative;
+    overflow-x:hidden;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(201,161,90,0.05) 0px, rgba(201,161,90,0.05) 1px, transparent 1px, transparent 40px),
+      repeating-linear-gradient(90deg, rgba(201,161,90,0.05) 0px, rgba(201,161,90,0.05) 1px, transparent 1px, transparent 40px);
+  }
+
+  .stage{
+    width:100%;
+    max-width:640px;
+    position:relative;
+  }
+
+  /* ---------- Tarjeta tipo papel ---------- */
+  .sheet{
+    background:var(--paper);
+    border-radius:var(--radius);
+    box-shadow:0 30px 60px -20px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+    padding:44px 40px 36px;
+    position:relative;
+    animation:rise .6s cubic-bezier(.2,.7,.3,1) both;
+  }
+
+  @keyframes rise{
+    from{ opacity:0; transform:translateY(18px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  .sheet::before{
+    content:"";
+    position:absolute;
+    left:0; right:0; top:0;
+    height:6px;
+    border-radius:var(--radius) var(--radius) 0 0;
+    background:linear-gradient(90deg, var(--gold) 0%, var(--gold-soft) 50%, var(--gold) 100%);
+  }
+
+  /* ---------- Pantalla de inicio ---------- */
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:22px; height:1px;
+    background:var(--gold);
+  }
+
+  h1.title{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:clamp(30px,5vw,42px);
+    line-height:1.08;
+    margin:0 0 14px;
+    color:var(--ink);
+  }
+  h1.title em{
+    font-style:italic;
+    font-weight:500;
+    color:var(--gold);
+  }
+
+  .lede{
+    font-size:16px;
+    line-height:1.6;
+    color:#4A5568;
+    max-width:46ch;
+    margin:0 0 28px;
+  }
+
+  .rules{
+    list-style:none;
+    padding:0;
+    margin:0 0 32px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  .rules li{
+    border:1px solid var(--paper-line);
+    border-radius:12px;
+    padding:14px 16px;
+    background:rgba(255,255,255,0.5);
+  }
+  .rules li .n{
+    display:block;
+    font-family:var(--font-mono);
+    font-size:20px;
+    font-weight:600;
+    color:var(--ink);
+    margin-bottom:2px;
+  }
+  .rules li .l{
+    font-size:12.5px;
+    color:var(--muted);
+    letter-spacing:.02em;
+  }
+
+  button.primary{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:15.5px;
+    color:var(--paper);
+    background:var(--ink);
+    border:none;
+    border-radius:999px;
+    padding:15px 30px;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    transition:transform .15s ease, background .2s ease;
+  }
+  button.primary:hover{ background:var(--ink-soft); transform:translateY(-1px); }
+  button.primary:active{ transform:translateY(0); }
+  button.primary:focus-visible{ outline:2px solid var(--gold); outline-offset:3px; }
+  button.primary svg{ width:16px; height:16px; }
+
+  .ghost-btn{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:14.5px;
+    color:var(--ink);
+    background:transparent;
+    border:1.5px solid var(--ink);
+    border-radius:999px;
+    padding:13px 26px;
+    cursor:pointer;
+    transition:background .2s ease, color .2s ease;
+  }
+  .ghost-btn:hover{ background:var(--ink); color:var(--paper); }
+  .ghost-btn:focus-visible{ outline:2px solid var(--gold); outline-offset:3px; }
+
+  /* ---------- Pantalla de quiz ---------- */
+  .quiz-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    margin-bottom:22px;
+    gap:20px;
+  }
+
+  .fraction{
+    font-family:var(--font-mono);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    line-height:1;
+  }
+  .fraction .num{ font-size:26px; font-weight:600; color:var(--ink); }
+  .fraction .bar{ width:26px; height:2px; background:var(--ink); margin:4px 0; }
+  .fraction .den{ font-size:14px; color:var(--muted); }
+
+  .score-block{ text-align:right; }
+  .score-block .label{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:3px;
+  }
+  .score-block .value{
+    font-family:var(--font-mono);
+    font-size:26px;
+    font-weight:600;
+    color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+
+  .streak-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    margin-top:5px;
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:600;
+    color:var(--gold);
+    opacity:0;
+    transform:translateY(-4px);
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  .streak-tag.show{ opacity:1; transform:translateY(0); }
+
+  .timer-track{
+    width:100%;
+    height:5px;
+    background:var(--paper-line);
+    border-radius:999px;
+    overflow:hidden;
+    margin-bottom:30px;
+  }
+  .timer-fill{
+    height:100%;
+    width:100%;
+    background:var(--gold);
+    border-radius:999px;
+    transition:width 1s linear, background .3s ease;
+  }
+  .timer-fill.low{ background:var(--coral); }
+
+  .q-topic{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:10px;
+    font-weight:600;
+  }
+
+  .q-text{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:clamp(21px,3.4vw,26px);
+    line-height:1.3;
+    color:var(--ink);
+    margin:0 0 28px;
+    min-height:64px;
+  }
+
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    margin-bottom:8px;
+  }
+
+  .opt{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    width:100%;
+    text-align:left;
+    background:rgba(255,255,255,0.55);
+    border:1.5px solid var(--paper-line);
+    border-radius:14px;
+    padding:15px 18px;
+    font-family:var(--font-body);
+    font-size:15.5px;
+    color:var(--text);
+    cursor:pointer;
+    transition:border-color .18s ease, background .18s ease, transform .12s ease;
+  }
+  .opt:hover:not(:disabled){ border-color:var(--gold); background:rgba(255,255,255,0.85); transform:translateX(2px); }
+  .opt:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+  .opt:disabled{ cursor:default; }
+
+  .opt .badge{
+    flex:0 0 auto;
+    width:34px; height:34px;
+    border-radius:50%;
+    border:1.5px solid var(--paper-line);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display);
+    font-style:italic;
+    font-size:16px;
+    color:var(--ink);
+    transition:border-color .18s ease, background .18s ease, color .18s ease;
+  }
+  .opt:hover:not(:disabled) .badge{ border-color:var(--gold); }
+
+  .opt.correct{
+    border-color:var(--green);
+    background:rgba(76,122,99,0.12);
+  }
+  .opt.correct .badge{ background:var(--green); border-color:var(--green); color:#fff; }
+
+  .opt.wrong{
+    border-color:var(--coral);
+    background:rgba(193,84,63,0.1);
+  }
+  .opt.wrong .badge{ background:var(--coral); border-color:var(--coral); color:#fff; }
+
+  .feedback{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    margin-top:18px;
+    min-height:26px;
+    font-family:var(--font-mono);
+    font-size:13.5px;
+    opacity:0;
+    transform:translateY(-4px);
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  .feedback.show{ opacity:1; transform:translateY(0); }
+  .feedback .msg{ font-weight:600; }
+  .feedback.ok .msg{ color:var(--green); }
+  .feedback.bad .msg{ color:var(--coral); }
+  .feedback .pts{ color:var(--muted); }
+
+  .next-wrap{ display:flex; justify-content:flex-end; margin-top:20px; height:0; overflow:visible; }
+
+  /* ---------- Pantalla de resultados ---------- */
+  .result-top{
+    display:flex;
+    align-items:center;
+    gap:28px;
+    margin-bottom:30px;
+  }
+
+  .grade-circle{
+    flex:0 0 auto;
+    width:104px; height:104px;
+    border-radius:50%;
+    border:3px solid var(--coral);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-style:italic;
+    font-size:44px;
+    color:var(--coral);
+    transform:rotate(-6deg);
+    position:relative;
+  }
+  .grade-circle::after{
+    content:"";
+    position:absolute;
+    inset:-8px;
+    border-radius:50%;
+    border:1px solid rgba(193,84,63,0.35);
+  }
+
+  .result-top h2{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:26px;
+    margin:0 0 6px;
+    color:var(--ink);
+  }
+  .result-top p{
+    margin:0;
+    color:var(--muted);
+    font-size:14.5px;
+  }
+
+  .stat-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin-bottom:30px;
+  }
+  .stat{
+    border:1px solid var(--paper-line);
+    border-radius:12px;
+    padding:16px 14px;
+    background:rgba(255,255,255,0.5);
+    text-align:center;
+  }
+  .stat .v{
+    font-family:var(--font-mono);
+    font-size:24px;
+    font-weight:600;
+    color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  .stat .k{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-top:4px;
+  }
+
+  .breakdown{
+    border-top:1px dashed var(--paper-line);
+    padding-top:18px;
+    margin-bottom:30px;
+  }
+  .breakdown-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:14px;
+    padding:6px 0;
+    color:#4A5568;
+  }
+  .breakdown-row span:last-child{
+    font-family:var(--font-mono);
+    color:var(--ink);
+    font-weight:600;
+  }
+
+  .result-actions{ display:flex; gap:12px; flex-wrap:wrap; }
+
+  footer.note{
+    text-align:center;
+    color:rgba(247,244,236,0.35);
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    margin-top:22px;
+    letter-spacing:.04em;
+  }
+
+  @media (max-width:520px){
+    .sheet{ padding:32px 22px 28px; }
+    .rules{ grid-template-columns:1fr 1fr; }
+    .result-top{ flex-direction:column; text-align:center; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="sheet">
+
+    <!-- INICIO -->
+    <div class="view active" id="view-start">
+      <div class="eyebrow">Examen · 10 sumas</div>
+      <h1 class="title">Pon a prueba tu<br><em>agilidad con sumas</em>.</h1>
+      <p class="lede">Diez sumas básicas, tres opciones por pregunta. Gana puntos base, bono por velocidad y multiplicador por racha de aciertos.</p>
+
+      <ul class="rules">
+        <li><span class="n">100</span><span class="l">puntos por acierto</span></li>
+        <li><span class="n">+50</span><span class="l">bono máximo por rapidez</span></li>
+        <li><span class="n">×2.0</span><span class="l">multiplicador por racha</span></li>
+        <li><span class="n">20s</span><span class="l">por pregunta</span></li>
+      </ul>
+
+      <button class="primary" id="btn-start">
+        Comenzar examen
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="view" id="view-quiz">
+      <div class="quiz-head">
+        <div class="fraction">
+          <span class="num" id="q-num">1</span>
+          <span class="bar"></span>
+          <span class="den" id="q-den">10</span>
+        </div>
+        <div class="score-block">
+          <div class="label">Puntos</div>
+          <div class="value" id="score-val">0</div>
+          <div class="streak-tag" id="streak-tag">racha ×1</div>
+        </div>
+      </div>
+
+      <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+
+      <div class="q-topic" id="q-topic">Aritmética</div>
+      <p class="q-text" id="q-text">Cargando pregunta…</p>
+
+      <div class="options" id="options"></div>
+
+      <div class="feedback" id="feedback">
+        <span class="msg" id="feedback-msg"></span>
+        <span class="pts" id="feedback-pts"></span>
+      </div>
+      <div class="next-wrap">
+        <button class="ghost-btn" id="btn-next" style="display:none;">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="view" id="view-result">
+      <div class="result-top">
+        <div class="grade-circle" id="grade-circle">A</div>
+        <div>
+          <h2 id="grade-title">Sobresaliente</h2>
+          <p id="grade-sub">Dominas los fundamentos con solidez.</p>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat"><div class="v" id="stat-correct">0/10</div><div class="k">Aciertos</div></div>
+        <div class="stat"><div class="v" id="stat-accuracy">0%</div><div class="k">Precisión</div></div>
+        <div class="stat"><div class="v" id="stat-streak">0</div><div class="k">Mejor racha</div></div>
+      </div>
+
+      <div class="breakdown">
+        <div class="breakdown-row"><span>Puntos base</span><span id="bd-base">0</span></div>
+        <div class="breakdown-row"><span>Bono por velocidad</span><span id="bd-speed">0</span></div>
+        <div class="breakdown-row"><span>Bono por racha</span><span id="bd-streak">0</span></div>
+        <div class="breakdown-row"><span>Puntaje final</span><span id="bd-total">0</span></div>
+      </div>
+
+      <div class="result-actions">
+        <button class="primary" id="btn-restart">
+          Intentar de nuevo
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 5v5h5"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+  <footer class="note">quiz de matemáticas · elige α, β o γ</footer>
+</div>
+
+<script>
+(function(){
+
+  const QUESTIONS = [
+    { topic:"Suma simple", text:"¿Cuánto es 4 + 3?", options:["6","7","8"], answer:1 },
+    { topic:"Suma simple", text:"¿Cuánto es 9 + 6?", options:["14","15","16"], answer:1 },
+    { topic:"Suma con decenas", text:"¿Cuánto es 12 + 8?", options:["18","20","22"], answer:1 },
+    { topic:"Suma con decenas", text:"¿Cuánto es 25 + 17?", options:["40","42","44"], answer:1 },
+    { topic:"Suma con decenas", text:"¿Cuánto es 34 + 19?", options:["51","53","55"], answer:1 },
+    { topic:"Suma con centenas", text:"¿Cuánto es 45 + 38?", options:["81","83","85"], answer:1 },
+    { topic:"Suma con centenas", text:"¿Cuánto es 56 + 27?", options:["81","83","85"], answer:1 },
+    { topic:"Suma de tres números", text:"¿Cuánto es 6 + 9 + 4?", options:["17","19","21"], answer:1 },
+    { topic:"Suma con centenas", text:"¿Cuánto es 78 + 45?", options:["121","123","125"], answer:1 },
+    { topic:"Suma de tres números", text:"¿Cuánto es 23 + 16 + 11?", options:["48","50","52"], answer:1 },
+  ];
+
+  const TIME_LIMIT = 20; // segundos por pregunta
+  const BADGES = ["α","β","γ"];
+
+  let current = 0;
+  let score = 0;
+  let streak = 0;
+  let bestStreak = 0;
+  let correctCount = 0;
+  let basePoints = 0;
+  let speedPoints = 0;
+  let streakPoints = 0;
+  let timeLeft = TIME_LIMIT;
+  let timerId = null;
+  let answered = false;
+
+  const viewStart = document.getElementById('view-start');
+  const viewQuiz = document.getElementById('view-quiz');
+  const viewResult = document.getElementById('view-result');
+
+  const qNum = document.getElementById('q-num');
+  const qDen = document.getElementById('q-den');
+  const scoreVal = document.getElementById('score-val');
+  const streakTag = document.getElementById('streak-tag');
+  const timerFill = document.getElementById('timer-fill');
+  const qTopic = document.getElementById('q-topic');
+  const qText = document.getElementById('q-text');
+  const optionsEl = document.getElementById('options');
+  const feedback = document.getElementById('feedback');
+  const feedbackMsg = document.getElementById('feedback-msg');
+  const feedbackPts = document.getElementById('feedback-pts');
+  const btnNext = document.getElementById('btn-next');
+
+  qDen.textContent = QUESTIONS.length;
+
+  document.getElementById('btn-start').addEventListener('click', startQuiz);
+  document.getElementById('btn-restart').addEventListener('click', resetQuiz);
+  btnNext.addEventListener('click', nextQuestion);
+
+  function startQuiz(){
+    viewStart.classList.remove('active');
+    viewQuiz.classList.add('active');
+    current = 0; score = 0; streak = 0; bestStreak = 0; correctCount = 0;
+    basePoints = 0; speedPoints = 0; streakPoints = 0;
+    renderQuestion();
+  }
+
+  function currentMultiplier(){
+    return Math.min(1 + 0.2 * Math.max(0, streak - 2), 2.0);
+  }
+
+  function renderQuestion(){
+    answered = false;
+    const q = QUESTIONS[current];
+    qNum.textContent = current + 1;
+    qTopic.textContent = q.topic;
+    qText.textContent = q.text;
+    feedback.classList.remove('show','ok','bad');
+    feedbackMsg.textContent = '';
+    feedbackPts.textContent = '';
+    btnNext.style.display = 'none';
+
+    updateStreakTag();
+
+    optionsEl.innerHTML = '';
+    q.options.forEach((opt, i) => {
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.innerHTML = `<span class="badge">${BADGES[i]}</span><span>${opt}</span>`;
+      b.addEventListener('click', () => selectAnswer(i));
+      optionsEl.appendChild(b);
+    });
+
+    timeLeft = TIME_LIMIT;
+    updateTimerBar();
+    clearInterval(timerId);
+    timerId = setInterval(tick, 1000);
+  }
+
+  function tick(){
+    timeLeft -= 1;
+    updateTimerBar();
+    if (timeLeft <= 0){
+      clearInterval(timerId);
+      if (!answered) selectAnswer(-1);
+    }
+  }
+
+  function updateTimerBar(){
+    const pct = Math.max(0, (timeLeft / TIME_LIMIT) * 100);
+    timerFill.style.width = pct + '%';
+    timerFill.classList.toggle('low', timeLeft <= 5);
+  }
+
+  function updateStreakTag(){
+    if (streak >= 2){
+      streakTag.textContent = `racha ×${currentMultiplier().toFixed(1)}`;
+      streakTag.classList.add('show');
+    } else {
+      streakTag.classList.remove('show');
+    }
+  }
+
+  function selectAnswer(i){
+    if (answered) return;
+    answered = true;
+    clearInterval(timerId);
+
+    const q = QUESTIONS[current];
+    const opts = optionsEl.querySelectorAll('.opt');
+    opts.forEach(o => o.disabled = true);
+
+    const isCorrect = i === q.answer;
+
+    if (isCorrect){
+      opts[i].classList.add('correct');
+      streak += 1;
+      bestStreak = Math.max(bestStreak, streak);
+      correctCount += 1;
+
+      const speedBonus = Math.round((timeLeft / TIME_LIMIT) * 50);
+      const mult = currentMultiplier();
+      const raw = 100 + speedBonus;
+      const total = Math.round(raw * mult);
+
+      basePoints += 100;
+      speedPoints += speedBonus;
+      streakPoints += total - raw;
+      score += total;
+
+      feedback.classList.add('show','ok');
+      feedbackMsg.textContent = '✓ Correcto';
+      feedbackPts.textContent = `+${total} pts  (base 100 · velocidad +${speedBonus} · ×${mult.toFixed(1)})`;
+    } else {
+      if (i >= 0) opts[i].classList.add('wrong');
+      opts[q.answer].classList.add('correct');
+      streak = 0;
+
+      feedback.classList.add('show','bad');
+      feedbackMsg.textContent = i === -1 ? '✕ Tiempo agotado' : '✕ Incorrecto';
+      feedbackPts.textContent = '+0 pts';
+    }
+
+    scoreVal.textContent = score;
+    updateStreakTag();
+    btnNext.style.display = 'inline-flex';
+    btnNext.textContent = current === QUESTIONS.length - 1 ? 'Ver resultados →' : 'Siguiente →';
+    btnNext.focus();
+  }
+
+  function nextQuestion(){
+    current += 1;
+    if (current >= QUESTIONS.length){
+      showResults();
+    } else {
+      renderQuestion();
+    }
+  }
+
+  function showResults(){
+    viewQuiz.classList.remove('active');
+    viewResult.classList.add('active');
+
+    const accuracy = Math.round((correctCount / QUESTIONS.length) * 100);
+
+    document.getElementById('stat-correct').textContent = `${correctCount}/${QUESTIONS.length}`;
+    document.getElementById('stat-accuracy').textContent = `${accuracy}%`;
+    document.getElementById('stat-streak').textContent = bestStreak;
+
+    document.getElementById('bd-base').textContent = basePoints;
+    document.getElementById('bd-speed').textContent = `+${speedPoints}`;
+    document.getElementById('bd-streak').textContent = `+${streakPoints}`;
+    document.getElementById('bd-total').textContent = score;
+
+    const gradeCircle = document.getElementById('grade-circle');
+    const gradeTitle = document.getElementById('grade-title');
+    const gradeSub = document.getElementById('grade-sub');
+
+    let letter, title, sub;
+    if (accuracy >= 90){ letter='A'; title='Sobresaliente'; sub='Dominas los fundamentos con solidez.'; }
+    else if (accuracy >= 75){ letter='B'; title='Notable'; sub='Muy buen manejo, con pequeños detalles por afinar.'; }
+    else if (accuracy >= 60){ letter='C'; title='Aprobado'; sub='Vas por buen camino, sigue practicando.'; }
+    else { letter='D'; title='A reforzar'; sub='Repasa los conceptos base y vuelve a intentarlo.'; }
+
+    gradeCircle.textContent = letter;
+    gradeTitle.textContent = title;
+    gradeSub.textContent = sub;
+  }
+
+  function resetQuiz(){
+    viewResult.classList.remove('active');
+    viewStart.classList.add('active');
+  }
+
+  // Atajos de teclado 1/2/3
+  document.addEventListener('keydown', (e) => {
+    if (!viewQuiz.classList.contains('active') || answered) return;
+    if (['1','2','3'].includes(e.key)){
+      selectAnswer(parseInt(e.key,10) - 1);
+    }
+  });
+
+})();
+</script>
+
+</body>
+</html>
